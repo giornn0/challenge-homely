@@ -1,15 +1,13 @@
 -- Your SQL goes here
-CREATE TABLE users (
+CREATE TABLE customers (
   id SERIAL PRIMARY KEY,
-  name VARCHAR NOT NULL,
-  lastName VARCHAR NOT NULL,
-  role_id SERIAL REFERENCES roles(id),
-  password TEXT NOT NULL,
-  email VARCHAR NOT NULL UNIQUE,
+  user_id SERIAL REFERENCES users(id),
+  profile VARCHAR NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
 CREATE TRIGGER set_timestamp
-BEFORE UPDATE ON users
+BEFORE UPDATE ON customers
 FOR EACH ROW
 EXECUTE PROCEDURE trigger_set_timestamp();

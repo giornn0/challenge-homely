@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     models::server::Pool,
-    routes::{concept::concepts_router, user::users_router, auth::auth_router},
+    routes::{user::users_router, auth::auth_router},
     services::{response::handle_rejection, server::serve_start},
     utils::port::port,
 };
@@ -17,7 +17,7 @@ pub async fn app(pool: &Arc<Pool>) {
     // let fallback = warp::any().map(|| "Ninguna pagina!");
     // let download_route = warp::path("files").and(warp::fs::dir("./files/"));
     let apis = started
-        .or(concepts_router(pool))
+        // .or(concepts_router(pool))
         .or(users_router(pool))
         .or(auth_router(pool))
         .recover(handle_rejection);

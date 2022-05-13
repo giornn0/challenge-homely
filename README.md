@@ -35,3 +35,6 @@ apk="cd android && ./gradlew assembleDebug"
 eval $apk
 copy_apk="cd .. && cp android/app/build/outputs/apk/debug/app-debug.apk APK && cp android/app/build/outputs/apk/debug/output-metadata.json APK"
 eval $copy_apk
+
+For fast compiles use sccache
+export RUSTC_WRAPPER=$HOME->/path/to/sccache
