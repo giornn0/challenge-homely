@@ -30,6 +30,7 @@ pub fn tickets_router(
     let assign = scope
         .and(warp::put())
         .and(warp::path::param())
+        .and(warp::path("assign"))
         .and(warp::path::end())
         .and(with_authenticathed(&db_pool))
         .and(with_validated_json())
@@ -38,6 +39,7 @@ pub fn tickets_router(
     let change_status = scope
         .and(warp::put())
         .and(warp::path::param())
+        .and(warp::path("status"))
         .and(warp::path::end())
         .and(with_authenticathed(&db_pool))
         .and(with_validated_json())

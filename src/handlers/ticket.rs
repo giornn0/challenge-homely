@@ -13,7 +13,7 @@ use crate::{
         user::{User, UserPayload},
     },
     services::{
-        errors::{throw_error, Unauthorized},
+        errors::{throw_error, Unauthorized, InvalidParameter},
         response::response,
     },
 };
@@ -72,13 +72,15 @@ pub async fn assign_ticket(
         .filter(role_id.eq(2))
         .find(data.get_in_charge())
         .get_result(&conn);
-    if loged_user.role_id == 1 && user.is_ok() {
+    if loged_user.role_id != 1{
+      throw_error(Unauthorized::new())
+    } else if !user.is_ok(){
+        throw_error(InvalidParameter::from("Trying to assing to an invalid user".to_owned()))
+    } else{
         let result: Result<Ticket, Error> = diesel::update(tickets.filter(id.eq(ticket_id)))
-            .set(&data)
+            .set(&data.set_changed_by(&loged_user))
             .get_result(&conn);
         response(result)
-    } else {
-        throw_error(Unauthorized::new())
     }
 }
 pub async fn change_ticket_status(
@@ -89,9 +91,9 @@ pub async fn change_ticket_status(
 ) -> Result<Json, Rejection> {
     use crate::schema::tickets::dsl::{id, tickets};
     let conn = db_pool.get().unwrap();
-    if loged_user.id != 4 {
+    if loged_user.role_id != 4 {
         let result: Result<Ticket, Error> = diesel::update(tickets.filter(id.eq(ticket_id)))
-            .set(&data)
+        .set(&data.set_changed_by(&loged_user))
             .get_result(&conn);
         response(result)
     } else {

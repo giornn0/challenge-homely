@@ -3,7 +3,7 @@ use std::{convert::Infallible};
 use http_api_problem::HttpApiProblem;
 use warp::{reply::{Json},Rejection, hyper::StatusCode, Reply, reject::{MethodNotAllowed}, body::BodyDeserializeError};
 use diesel::result::Error as DbError;
-use crate::{services::errors::{QueryNotFound, InvalidParameter}, models::server::ApiResponse};
+use crate::{services::errors::{QueryNotFound, InvalidParameter, Unauthorized}, models::server::ApiResponse};
 
 use super::{request::Error, errors::handling_db_errors};
 
@@ -36,6 +36,11 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
     problem
   }else if let Some(e) = err.find::<QueryNotFound>(){
     let problem = HttpApiProblem::new(StatusCode::NOT_FOUND)
+        .title("Data not found")
+        .detail(format!("Error => {:?}",e));
+    problem
+  }else if let Some(e) = err.find::<Unauthorized>(){
+    let problem = HttpApiProblem::new(StatusCode::UNAUTHORIZED)
         .title("Data not found")
         .detail(format!("Error => {:?}",e));
     problem

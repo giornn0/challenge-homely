@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use validator::Validate;
 use crate::schema::{ticket_statuses, tickets};
 
-use super::customer::Customer;
+use super::{customer::Customer, user::UserPayload};
 
 #[derive(Serialize, Deserialize)]
 pub struct TicketStatus{
@@ -68,21 +68,30 @@ pub struct PostTicket{
 #[table_name = "tickets"]
 pub struct AssignTicket{
   in_charge_user_id: i32,
-  changed_by_user_id: i32,
   status_id: i32,
+  changed_by_user_id: i32,
 }
 impl AssignTicket{
   pub fn get_in_charge(&self)-> i32{
     self.in_charge_user_id
+  }
+  pub fn set_changed_by(mut self, user: &UserPayload)->AssignTicket{
+    self.changed_by_user_id = user.id;
+    self
   }
 }
 #[derive(Deserialize,Serialize, AsChangeset,Validate)]
 #[table_name = "tickets"]
 pub struct ChangeTicketStatus{
   status_id: i32,
-  changed_by_user_id: i32
+  changed_by_user_id: i32,
 }
-
+impl ChangeTicketStatus{
+  pub fn set_changed_by(mut self, user: &UserPayload)->ChangeTicketStatus{
+    self.changed_by_user_id = user.id;
+    self
+  }
+}
 #[derive(Deserialize, Debug)]
 pub struct TicketPageQuery {
     pub page: i64,
