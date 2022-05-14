@@ -7,8 +7,10 @@ use crate::{
     models::{
         customer::Customer,
         server::Pool,
-        ticket::{AssignTicket, ChangeTicketStatus, NewTicket, Ticket, TicketPageQuery},
-        user::UserPayload,
+        ticket::{
+            AssignTicket, ChangeTicketStatus, NewTicket, PostTicket, Ticket, TicketPageQuery,
+        },
+        user::{User, UserPayload},
     },
     services::{
         errors::{throw_error, Unauthorized},
@@ -21,7 +23,7 @@ pub async fn get_tickets(
     _: UserPayload,
     db_pool: Arc<Pool>,
 ) -> Result<Json, Rejection> {
-    use crate::schema::tickets::dsl::{created_at, in_charge_user_id, tickets};
+    use crate::schema::tickets::dsl::{created_at, tickets};
     let conn = db_pool.get().unwrap();
     let result: Result<Vec<Ticket>, Error> = tickets
         .order(created_at.desc())
@@ -33,7 +35,7 @@ pub async fn get_tickets(
 
 pub async fn create_ticket(
     loged_user: UserPayload,
-    new_ticket: NewTicket,
+    new_ticket: PostTicket,
     db_pool: Arc<Pool>,
 ) -> Result<Json, Rejection> {
     use crate::schema::{
@@ -48,23 +50,29 @@ pub async fn create_ticket(
     {
         Ok(customer) => {
             let result: Result<Ticket, Error> = diesel::insert_into(tickets)
-                .values(new_ticket)
+                .values(&NewTicket::from(&customer, new_ticket))
                 .get_result(&conn);
             response(result)
         }
         Err(_) => throw_error(Unauthorized::new()),
     }
 }
-pub async fn assignTicket(
+pub async fn assign_ticket(
     ticket_id: i32,
     loged_user: UserPayload,
     data: AssignTicket,
     db_pool: Arc<Pool>,
 ) -> Result<Json, Rejection> {
-    use crate::schema::tickets::dsl::{id, tickets};
+    use crate::schema::{
+        tickets::dsl::{id, tickets},
+        users::dsl::{role_id, users},
+    };
     let conn = db_pool.get().unwrap();
-
-    if loged_user.role_id == 1 {
+    let user: Result<User, Error> = users
+        .filter(role_id.eq(2))
+        .find(data.get_in_charge())
+        .get_result(&conn);
+    if loged_user.role_id == 1 && user.is_ok() {
         let result: Result<Ticket, Error> = diesel::update(tickets.filter(id.eq(ticket_id)))
             .set(&data)
             .get_result(&conn);
@@ -73,17 +81,20 @@ pub async fn assignTicket(
         throw_error(Unauthorized::new())
     }
 }
-pub async fn changeTicketStatus(
+pub async fn change_ticket_status(
     ticket_id: i32,
-    _loged_user: UserPayload,
+    loged_user: UserPayload,
     data: ChangeTicketStatus,
     db_pool: Arc<Pool>,
 ) -> Result<Json, Rejection> {
     use crate::schema::tickets::dsl::{id, tickets};
     let conn = db_pool.get().unwrap();
-
-    let result: Result<Ticket, Error> = diesel::update(tickets.filter(id.eq(ticket_id)))
-        .set(&data)
-        .get_result(&conn);
-    response(result)
+    if loged_user.id != 4 {
+        let result: Result<Ticket, Error> = diesel::update(tickets.filter(id.eq(ticket_id)))
+            .set(&data)
+            .get_result(&conn);
+        response(result)
+    } else {
+        throw_error(Unauthorized::new())
+    }
 }

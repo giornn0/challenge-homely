@@ -8,7 +8,6 @@ use crate::{
     },
     services::{
         errors::{throw_error, Unauthorized, QueryError, handling_db_errors},
-        response::response,
     }, handlers::auth::save_token,
 };
 use diesel::{prelude::*, result::Error};

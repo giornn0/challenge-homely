@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use crate::schema::customers;
 
-use super::user::{User, UserPayload};
+use super::{user::{User, UserPayload}, ticket::{PostTicket, NewTicket}};
 
 #[derive(Serialize, Deserialize, Queryable)]
 pub struct Customer{
@@ -14,6 +14,12 @@ pub struct Customer{
 impl Customer{
   pub fn get_details(self: &Customer, matched_user: &UserPayload)->CustomerDetails{
       CustomerDetails::from(matched_user, self.profile.to_owned())
+  }
+  pub fn into(self: &Customer, ticket: PostTicket)->NewTicket{
+    NewTicket::from(self,ticket)
+  }
+  pub fn get_id(&self)->i32{
+    self.id
   }
 }
 
