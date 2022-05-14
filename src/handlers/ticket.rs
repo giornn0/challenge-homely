@@ -8,13 +8,12 @@ use crate::{
         customer::Customer,
         server::Pool,
         ticket::{AssignTicket, ChangeTicketStatus, NewTicket, Ticket, TicketPageQuery},
-        user::{User, UserPayload},
+        user::UserPayload,
     },
     services::{
         errors::{throw_error, Unauthorized},
         response::response,
     },
-    utils::constants::Roles,
 };
 
 pub async fn get_tickets(
@@ -76,7 +75,7 @@ pub async fn assignTicket(
 }
 pub async fn changeTicketStatus(
     ticket_id: i32,
-    loged_user: UserPayload,
+    _loged_user: UserPayload,
     data: ChangeTicketStatus,
     db_pool: Arc<Pool>,
 ) -> Result<Json, Rejection> {

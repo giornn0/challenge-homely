@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use crate::{
     models::{
-        customer::{Customer, NewCustomer},
-        server::Pool,
+        customer::{Customer, NewCustomer, CustomerDetails},
+        server::{Pool, ApiResponse},
         user::{User, UserPayload},
     },
     services::{
-        errors::{throw_error, Unauthorized, QueryError},
+        errors::{throw_error, Unauthorized, QueryError, handling_db_errors},
         response::response,
     }, handlers::auth::save_token,
 };
@@ -22,8 +22,12 @@ pub async fn get_customer(
     use crate::schema::customers::dsl::customers;
     let conn = db_pool.get().unwrap();
     if id == log_customer.id {
-        let result: Result<Customer, Error> = customers.find(id).get_result(&conn);
-        response(result)
+        match customers.find(id).get_result::<Customer>(&conn){
+          Ok(customer)=>{
+            Ok(warp::reply::json(&ApiResponse::<CustomerDetails>::from(customer.get_details(&log_customer))))
+          },
+          Err(error) => handling_db_errors(error)
+        }
     } else {
         throw_error(Unauthorized::new())
     }

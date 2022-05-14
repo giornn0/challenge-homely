@@ -77,6 +77,8 @@ pub struct NewUser {
     lastname: String,
     #[validate(email)]
     email: String,
+    #[validate(range(min = 1, max = 4))]
+    role_id: i32,
     password: String,
     pub profile: Option<String>
 }

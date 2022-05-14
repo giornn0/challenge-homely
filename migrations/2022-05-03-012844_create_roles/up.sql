@@ -14,3 +14,4 @@ EXECUTE PROCEDURE trigger_set_timestamp();
 INSERT INTO roles (name) VALUES ('admin');
 INSERT INTO roles (name) VALUES ('ops');
 INSERT INTO roles (name) VALUES ('marketing');
+INSERT INTO roles (name) VALUES ('user');

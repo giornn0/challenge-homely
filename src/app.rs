@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     models::server::Pool,
-    routes::{user::users_router, auth::auth_router},
+    routes::{user::users_router, auth::auth_router, customer::customers_router, service::services_router},
     services::{response::handle_rejection, server::serve_start},
     utils::port::port,
 };
@@ -19,6 +19,8 @@ pub async fn app(pool: &Arc<Pool>) {
     let apis = started
         // .or(concepts_router(pool))
         .or(users_router(pool))
+        .or(customers_router(pool))
+        .or(services_router(pool))
         .or(auth_router(pool))
         .recover(handle_rejection);
 

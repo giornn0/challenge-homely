@@ -12,6 +12,7 @@ pub fn customers_router(
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     let scope = warp::path(API).and(warp::path("customers"));
     let get_one = scope
+        .and(warp::get())
         .and(warp::path::param())
         .and(with_authenticathed(&db_pool))
         .and(warp::path::end())

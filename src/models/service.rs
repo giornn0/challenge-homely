@@ -20,13 +20,13 @@ pub struct NewServiceType{
 }
 
 
-#[derive(Serialize, Deserialize)]
+#[derive(Queryable,Serialize)]
 pub struct Service{
   id: i32,
-  type_id: i32,
   name: String,
   description: String,
   cost: BigDecimal,
+  type_id: i32,
   active: Option<bool>,
   created_at: chrono::NaiveDateTime,
   updated_at: chrono::NaiveDateTime,
