@@ -48,6 +48,7 @@ impl Token {
     pub fn with_db_functionality(
         request_token: String,
         db_pool: Arc<Pool>,
+        role: Option<String>
     ) -> Result<UserPayload, Unauthorized> {
         if request_token.len() > 0 {
             use crate::schema::{
@@ -63,7 +64,11 @@ impl Token {
             if let Some(checked_id) = finded_id {
                 let user: Result<User, Error> = users.find(checked_id).get_result(&conn);
                 if let Ok(finded_user) = user {
-                    Ok(finded_user.get_payload())
+                    if let Some(role) = role{
+                      Ok(finded_user.get_payload())
+                    }else{
+                      Ok(finded_user.get_payload())
+                    }
                 } else {
                     Err(Unauthorized::from("User not registered".to_owned()))
                 }

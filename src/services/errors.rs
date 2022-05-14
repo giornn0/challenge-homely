@@ -49,6 +49,22 @@ impl Unauthorized {
     }
   }
 }
+#[derive(Debug)]
+pub struct QueryError{
+  _message: String,
+}
+impl reject::Reject for QueryError {}
+
+impl QueryError {
+  pub fn new()->QueryError{
+    QueryError { _message: "Error while trying to perform this action".to_owned() }
+  }
+  pub fn from(_message: String)-> QueryError{
+    QueryError{
+      _message
+    }
+  }
+}
 
 pub fn throw_error<T: warp::reject::Reject>(error: T)-> Result<Json,Rejection>{
   Err(warp::reject::custom(error))

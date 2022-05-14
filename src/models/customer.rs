@@ -1,7 +1,9 @@
 use serde::{Serialize, Deserialize};
 use crate::schema::customers;
 
-#[derive(Serialize, Deserialize)]
+use super::user::User;
+
+#[derive(Serialize, Deserialize, Queryable)]
 pub struct Customer{
   id: i32,
   user_id: i32,
@@ -15,4 +17,12 @@ pub struct Customer{
 pub struct NewCustomer{
   user_id: i32,
   profile: String,
+}
+impl NewCustomer {
+  pub fn from(user: &User, profile: String)-> NewCustomer{
+    NewCustomer{
+        user_id: user.get_id(),
+        profile
+    }
+  }
 }

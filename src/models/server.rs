@@ -10,10 +10,10 @@ pub struct Serving{
 }
 
 #[derive(Deserialize, Debug)]
-pub struct SearchQuery {
-    pub _page: Option<i64>,
-    pub _take: Option<i64>,
-    pub _search: Option<String>
+pub struct PageQuery {
+    pub page: Option<i64>,
+    pub take: Option<i64>,
+    pub search: Option<String>
 }
 
 #[derive(Serialize,Deserialize)]

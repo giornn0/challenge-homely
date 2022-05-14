@@ -26,12 +26,12 @@
 // ) -> Result<Json, Rejection> {
 //     use crate::schema::concepts::dsl::{concepts, user_id,created_at};
 //     let conn = db_pool.get().unwrap();
-//     let result = if let Some(take) = query._take {
+//     let result = if let Some(take) = query.take {
 //         concepts
 //             .filter(user_id.eq(log_user.id))
 //             .order(created_at.desc())
 //             .limit(take)
-//             .offset(if let Some(page) = query._page {
+//             .offset(if let Some(page) = query.page {
 //                 (page - 1) * take
 //             } else {
 //                 0

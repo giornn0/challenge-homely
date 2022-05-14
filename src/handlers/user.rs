@@ -1,24 +1,32 @@
 use std::sync::Arc;
 
 use crate::{
+    handlers::{auth::save_token, customer::create_customer},
     models::{
         server::Pool,
-        user::{NewUser, User, UserPayload},
+        user::{InsertUser, NewUser, User, UserPayload},
     },
     schema::users,
-    services::{errors::{InvalidParameter, handling_db_errors, throw_error, Unauthorized}, user_response::response_user}, handlers::auth::save_token,
+    services::{
+        errors::{handling_db_errors, throw_error, InvalidParameter, Unauthorized},
+        user_response::response_user,
+    },
 };
 use diesel::{prelude::*, result::Error};
 use warp::{reply::Json, Rejection};
 
-pub async fn get_user(id: i32,log_user: UserPayload, db_pool: Arc<Pool>) -> Result<Json, Rejection> {
+pub async fn get_user(
+    id: i32,
+    log_user: UserPayload,
+    db_pool: Arc<Pool>,
+) -> Result<Json, Rejection> {
     use crate::schema::users::dsl::users;
-    if id == log_user.id{
-      let conn = db_pool.get().unwrap();
-      let result: Result<User, Error> = users.find(id).get_result(&conn);
-      response_user(result)
-    }else{
-      throw_error(Unauthorized::new())
+    if id == log_user.id {
+        let conn = db_pool.get().unwrap();
+        let result: Result<User, Error> = users.find(id).get_result(&conn);
+        response_user(result)
+    } else {
+        throw_error(Unauthorized::new())
     }
 }
 
@@ -39,11 +47,17 @@ pub async fn create_user(mut value: NewUser, db_pool: Arc<Pool>) -> Result<Json,
     } else {
         let value = value.hash_password();
         let result: Result<User, Error> = diesel::insert_into(users::table)
-            .values(value)
+            .values(InsertUser::from(&value))
             .get_result(&conn);
         match result {
-          Ok(user)=> save_token(user, &conn),
-          Err(error)=> handling_db_errors(error)
+            Ok(user) => {
+                if value.profile.is_some() {
+                    create_customer(user, value.profile.as_ref().unwrap().to_owned(), db_pool)
+                } else {
+                    save_token(user, &conn)
+                }
+            }
+            Err(error) => handling_db_errors(error),
         }
     }
 }

@@ -11,3 +11,8 @@ CREATE TRIGGER set_timestamp
 BEFORE UPDATE ON ticket_statuses
 FOR EACH ROW
 EXECUTE PROCEDURE trigger_set_timestamp();
+
+INSERT INTO ticket_statuses (name) VALUES ('Abierto');
+INSERT INTO ticket_statuses (name) VALUES ('En progreso');
+INSERT INTO ticket_statuses (name) VALUES ('Resuelto');
+INSERT INTO ticket_statuses (name) VALUES ('Necesita reembolso');

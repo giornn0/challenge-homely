@@ -29,7 +29,14 @@ pub fn check_hashed(hash: String, compare: String)->bool{
 pub fn with_authenticathed(db_pool: &Arc<Pool>)-> impl Filter<Extract=(UserPayload,), Error= Rejection>+ Clone
 {
   warp::header::<String>("authorization").and(with_pool(db_pool.clone())).and_then(|token: String, db_pool: Arc<Pool>|async move{
-    Token::with_db_functionality(token,db_pool).map_err(warp::reject::custom)
+    Token::with_db_functionality(token,db_pool,None).map_err(warp::reject::custom)
   })
 }
+pub fn with_admin_role(db_pool: &Arc<Pool>)-> impl Filter<Extract=(UserPayload,), Error= Rejection>+ Clone
+{
+  warp::header::<String>("authorization").and(with_pool(db_pool.clone())).and_then(|token: String, db_pool: Arc<Pool>|async move{
+    Token::with_db_functionality(token,db_pool,Some("admin".to_owned())).map_err(warp::reject::custom)
+  })
+}
+
 // let password = b"hunter42"; // Bad password; don't actually use!

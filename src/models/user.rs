@@ -8,7 +8,7 @@ use crate::{
     utils::constants::encoding_key,
 };
 
-use super::token::NewToken;
+use super::{token::NewToken, customer::NewCustomer};
 
 #[derive(Queryable, Serialize, Deserialize, Debug)]
 pub struct User {
@@ -27,6 +27,7 @@ pub struct UserPayload {
     pub id: i32,
     pub name: String,
     pub lastname: String,
+    pub role_id: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -44,6 +45,7 @@ impl User {
     pub fn get_payload(self: &User) -> UserPayload {
         UserPayload {
             id: (*self).id,
+            role_id: (*self).role_id,
             name: (*self.name).to_owned(),
             lastname: (*self.lastname).to_owned(),
         }
@@ -62,10 +64,12 @@ impl User {
             Err(error) => Err(error),
         }
     }
+    pub fn get_id(self: &User)->i32{
+      self.id
+    }
 }
 
-#[derive(Serialize, Deserialize, Debug, Insertable, AsChangeset, Validate)]
-#[table_name = "users"]
+#[derive(Serialize, Deserialize, Debug,Validate)]
 pub struct NewUser {
     #[validate(length(min = 2, max = 55))]
     name: String,
@@ -74,6 +78,7 @@ pub struct NewUser {
     #[validate(email)]
     email: String,
     password: String,
+    pub profile: Option<String>
 }
 impl NewUser {
     pub fn hash_password(self: &mut NewUser) -> &NewUser {
@@ -88,4 +93,23 @@ impl NewUser {
     pub fn get_email(self: &NewUser) -> String {
         self.email.to_owned()
     }
+}
+
+#[derive(Insertable, Deserialize,Serialize, AsChangeset)]
+#[table_name="users"]
+pub struct InsertUser{
+  name: String,
+  lastname: String,
+  email: String,
+  password: String,
+}
+impl InsertUser{
+  pub fn from(new_user: &NewUser)-> InsertUser{
+    InsertUser{
+      name: new_user.name.to_owned(),
+      lastname: new_user.lastname.to_owned(),
+      email: new_user.email.to_owned(),
+      password: new_user.password.to_owned()
+    }
+  }
 }
