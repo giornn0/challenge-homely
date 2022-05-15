@@ -13,19 +13,30 @@ use crate::{
         user::{User, UserPayload},
     },
     services::{
-        errors::{throw_error, Unauthorized, InvalidParameter},
+        errors::{throw_error, Unauthorized, InvalidParameter, handling_db_errors},
         response::response,
     },
 };
 
 pub async fn get_tickets(
     paginator: TicketPageQuery,
-    _: UserPayload,
+    logged_user: UserPayload,
     db_pool: Arc<Pool>,
 ) -> Result<Json, Rejection> {
-    use crate::schema::tickets::dsl::{created_at, tickets};
+    use crate::schema::{tickets::{dsl::{created_at,customer_id, tickets,in_charge_user_id}, table},customers::dsl::{customers, user_id}};
     let conn = db_pool.get().unwrap();
-    let result: Result<Vec<Ticket>, Error> = tickets
+    let mut query = table.into_boxed();
+    if logged_user.role_id ==2{
+      query = query.filter(in_charge_user_id.eq(logged_user.id))
+    }
+    if logged_user.role_id == 4{
+      match customers.filter(user_id.eq(logged_user.id)).first::<Customer>(&conn) {
+        Ok(customer) =>query = query.filter(customer_id.eq(customer.get_id())),
+        Err(error) => return handling_db_errors(error)
+      }
+    }
+
+    let result: Result<Vec<Ticket>, Error> = query
         .order(created_at.desc())
         .limit(paginator.take)
         .offset((paginator.page - 1) * paginator.take)

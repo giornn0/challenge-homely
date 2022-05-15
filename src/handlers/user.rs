@@ -4,12 +4,13 @@ use crate::{
     handlers::{auth::save_token, customer::create_customer},
     models::{
         server::{Pool, UsersQuery},
-        user::{InsertUser, NewUser, User, UserPayload},
+        user::{FiltedUser, InsertUser, NewUser, User, UserPayload},
     },
     schema::users,
     services::{
         errors::{handling_db_errors, throw_error, InvalidParameter, Unauthorized},
-        user_response::response_user, response::response,
+        response::response,
+        user_response::response_user,
     },
 };
 use diesel::{prelude::*, result::Error};
@@ -20,14 +21,19 @@ pub async fn get_all_users(
     _logged_user: UserPayload,
     db_pool: Arc<Pool>,
 ) -> Result<Json, Rejection> {
-  use crate::schema::users::{table, dsl::role_id};
-  let conn = db_pool.get().unwrap();
-  let mut query = table.into_boxed();  
-  if let Some(role) = search_query.role_id{
-    query = query.filter(role_id.eq(role));
-  }
-  let result = query.load::<User>(&conn);
-  response(result)
+    use crate::schema::users::{
+        dsl::{created_at, email, id, lastname, name, role_id, updated_at},
+        table,
+    };
+    let conn = db_pool.get().unwrap();
+    let mut query = table
+        .select((id, name, lastname, role_id, email, created_at, updated_at))
+        .into_boxed();
+    if let Some(role) = search_query.role_id {
+        query = query.filter(role_id.eq(role));
+    }
+    let result = query.load::<FiltedUser>(&conn);
+    response(result)
 }
 
 pub async fn get_user(

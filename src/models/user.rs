@@ -21,6 +21,16 @@ pub struct User {
     created_at: chrono::NaiveDateTime,
     updated_at: chrono::NaiveDateTime,
 }
+#[derive(Queryable, Serialize, Deserialize, Debug)]
+pub struct FiltedUser {
+    id: i32,
+    name: String,
+    lastname: String,
+    role_id: i32,
+    email: String,
+    updated_at: chrono::NaiveDateTime,
+    created_at: chrono::NaiveDateTime,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UserPayload {
