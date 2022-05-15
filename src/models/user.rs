@@ -35,6 +35,7 @@ pub struct UserPayloadLogged {
     pub id: i32,
     pub name: String,
     pub lastname: String,
+    pub role_id: i32,
     pub token: String
 }
 
@@ -54,6 +55,7 @@ impl User {
       UserPayloadLogged {
         id: (*self).id,
         name: (*self.name).to_owned(),
+        role_id: (*self).role_id,
         lastname: (*self.lastname).to_owned(),
         token
     }

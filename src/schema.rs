@@ -43,6 +43,7 @@ table! {
     services (id) {
         id -> Int4,
         name -> Varchar,
+        customer_id -> Int4,
         description -> Varchar,
         cost -> Numeric,
         type_id -> Int4,
@@ -91,6 +92,7 @@ table! {
 
 joinable!(access_tokens -> users (user_id));
 joinable!(customers -> users (user_id));
+joinable!(services -> customers (customer_id));
 joinable!(services -> service_types (type_id));
 joinable!(tickets -> customers (customer_id));
 joinable!(tickets -> services (service_id));
