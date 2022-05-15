@@ -6,7 +6,7 @@ use crate::schema::{service_types, services};
 use super::customer::Customer;
 
 
-#[derive(Serialize, Deserialize)]
+#[derive(Queryable,Serialize, Deserialize)]
 pub struct ServiceType{
   id: i32,
   name: String,

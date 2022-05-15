@@ -3,17 +3,32 @@ use std::sync::Arc;
 use crate::{
     handlers::{auth::save_token, customer::create_customer},
     models::{
-        server::Pool,
+        server::{Pool, UsersQuery},
         user::{InsertUser, NewUser, User, UserPayload},
     },
     schema::users,
     services::{
         errors::{handling_db_errors, throw_error, InvalidParameter, Unauthorized},
-        user_response::response_user,
+        user_response::response_user, response::response,
     },
 };
 use diesel::{prelude::*, result::Error};
 use warp::{reply::Json, Rejection};
+
+pub async fn get_all_users(
+    search_query: UsersQuery,
+    _logged_user: UserPayload,
+    db_pool: Arc<Pool>,
+) -> Result<Json, Rejection> {
+  use crate::schema::users::{table, dsl::role_id};
+  let conn = db_pool.get().unwrap();
+  let mut query = table.into_boxed();  
+  if let Some(role) = search_query.role_id{
+    query = query.filter(role_id.eq(role));
+  }
+  let result = query.load::<User>(&conn);
+  response(result)
+}
 
 pub async fn get_user(
     id: i32,

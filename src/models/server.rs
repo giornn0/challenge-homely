@@ -41,3 +41,8 @@ pub struct Pagination{
   total_pages: i32,
   items_per_page: i32
 }
+
+#[derive(Serialize,Deserialize)]
+pub struct UsersQuery{
+  pub role_id: Option<i32>,
+}

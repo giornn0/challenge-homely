@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use diesel::query_builder::BoxedSelectStatement;
 use diesel::{prelude::*, result::Error};
 use warp::{reply::Json, Rejection};
 
+use crate::models::service::ServiceType;
 use crate::schema::services::dsl::{active, services};
 use crate::{
     models::{
@@ -44,4 +44,11 @@ pub async fn create_service(
         }
         Err(error) => handling_db_errors(error),
     }
+}
+
+pub async fn get_all_service_types(_: UserPayload, db_pool: Arc<Pool>)->Result<Json, Rejection>{
+  use crate::schema::service_types::dsl::service_types;
+  let conn = db_pool.get().unwrap();
+  let result: Result<Vec<ServiceType>,Error> = service_types.load::<ServiceType>(&conn);
+  response(result)
 }
