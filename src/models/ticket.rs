@@ -1,10 +1,12 @@
 use serde::{Serialize, Deserialize};
+use diesel::Associations;
 use validator::Validate;
 use crate::schema::{ticket_statuses, tickets};
 
 use super::{customer::Customer, user::UserPayload};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Identifiable, Queryable, Associations, PartialEq, Debug, Serialize, Deserialize)]
+#[table_name = "ticket_statuses"]
 pub struct TicketStatus{
   id: i32,
   name: String,
@@ -20,7 +22,9 @@ pub struct NewTicketStatus{
   active: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Queryable)]
+#[derive(Serialize, Deserialize, Identifiable, Queryable, Associations, Debug)]
+#[belongs_to(TicketStatus,foreign_key = "status_id")]
+#[table_name = "tickets"]
 pub struct Ticket{
   id: i32,
   description: String,
@@ -32,6 +36,39 @@ pub struct Ticket{
   created_at: chrono::NaiveDateTime,
   updated_at: chrono::NaiveDateTime,
 }
+impl Ticket{
+  pub fn get_status(self: &Ticket)->i32{
+    self.status_id
+  }
+  pub fn get_detailed(self: &Ticket, status: TicketStatus)->DetailedTicket{
+    DetailedTicket{
+      id: self.id,
+      description: self.description.to_owned(),
+      customer_id: self.customer_id,
+      service_id: self.service_id,
+      in_charge_user_id: self.in_charge_user_id,
+      changed_by_user_id: self.changed_by_user_id,
+      status_id: self.status_id,
+      status,
+      created_at: self.created_at,
+      updated_at: self.updated_at,
+    }
+  }
+}
+#[derive(Deserialize,Serialize)]
+pub struct DetailedTicket{
+  pub id: i32,
+  pub description: String,
+  pub customer_id: i32,
+  pub service_id: i32,
+  pub in_charge_user_id: Option<i32>,
+  pub changed_by_user_id: Option<i32>,
+  pub status_id: i32,
+  pub status: TicketStatus,
+  pub created_at: chrono::NaiveDateTime,
+  pub updated_at: chrono::NaiveDateTime,
+}
+
 
 #[derive(Insertable, Deserialize,Serialize, AsChangeset, Validate)]
 #[table_name = "tickets"]

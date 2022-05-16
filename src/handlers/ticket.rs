@@ -6,14 +6,15 @@ use warp::{reply::Json, Rejection};
 use crate::{
     models::{
         customer::Customer,
-        server::Pool,
+        server::{Pool, ApiResponse},
         ticket::{
             AssignTicket, ChangeTicketStatus, NewTicket, PostTicket, Ticket, TicketPageQuery,
+            DetailedTicket,
         },
         user::{User, UserPayload},
     },
     services::{
-        errors::{throw_error, Unauthorized, InvalidParameter, handling_db_errors},
+        errors::{handling_db_errors, throw_error, InvalidParameter, Unauthorized},
         response::response,
     },
 };
@@ -23,17 +24,31 @@ pub async fn get_tickets(
     logged_user: UserPayload,
     db_pool: Arc<Pool>,
 ) -> Result<Json, Rejection> {
-    use crate::schema::{tickets::{dsl::{created_at,customer_id, tickets,in_charge_user_id}, table},customers::dsl::{customers, user_id}};
+    use crate::schema::{
+        customers::dsl::{customers, user_id},
+        tickets::{
+            dsl::{created_at, customer_id, in_charge_user_id, status_id},
+            table,
+        },
+        ticket_statuses::{self, dsl::ticket_statuses as dsl_status}
+    };
     let conn = db_pool.get().unwrap();
     let mut query = table.into_boxed();
-    if logged_user.role_id ==2{
-      query = query.filter(in_charge_user_id.eq(logged_user.id))
+    if logged_user.role_id == 2 {
+        query = query.filter(in_charge_user_id.eq(logged_user.id))
     }
-    if logged_user.role_id == 4{
-      match customers.filter(user_id.eq(logged_user.id)).first::<Customer>(&conn) {
-        Ok(customer) =>query = query.filter(customer_id.eq(customer.get_id())),
-        Err(error) => return handling_db_errors(error)
-      }
+    if logged_user.role_id == 4 {
+        match customers
+            .filter(user_id.eq(logged_user.id))
+            .first::<Customer>(&conn)
+        {
+            Ok(customer) => query = query.filter(customer_id.eq(customer.get_id())),
+            Err(error) => return handling_db_errors(error),
+        }
+    }
+
+    if let Some(status) = paginator.status_id {
+        query = query.filter(status_id.eq(status));
     }
 
     let result: Result<Vec<Ticket>, Error> = query
@@ -41,7 +56,15 @@ pub async fn get_tickets(
         .limit(paginator.take)
         .offset((paginator.page - 1) * paginator.take)
         .load::<Ticket>(&conn);
-    response(result)
+    match result{
+      Ok(result_tickets) =>{  
+        let status: Vec<DetailedTicket> = result_tickets.iter().map(|ticket|{
+          ticket.get_detailed(dsl_status.find(ticket.get_status()).get_result(&conn).unwrap())
+        }).collect();
+        Ok(warp::reply::json(&ApiResponse::<Vec<DetailedTicket>>::from(&status)))
+      },
+      Err(error) =>handling_db_errors(error)
+    }
 }
 
 pub async fn create_ticket(
@@ -83,11 +106,13 @@ pub async fn assign_ticket(
         .filter(role_id.eq(2))
         .find(data.get_in_charge())
         .get_result(&conn);
-    if loged_user.role_id != 1{
-      throw_error(Unauthorized::new())
-    } else if !user.is_ok(){
-        throw_error(InvalidParameter::from("Trying to assing to an invalid user".to_owned()))
-    } else{
+    if loged_user.role_id != 1 {
+        throw_error(Unauthorized::new())
+    } else if !user.is_ok() {
+        throw_error(InvalidParameter::from(
+            "Trying to assing to an invalid user".to_owned(),
+        ))
+    } else {
         let result: Result<Ticket, Error> = diesel::update(tickets.filter(id.eq(ticket_id)))
             .set(&data.set_changed_by(&loged_user))
             .get_result(&conn);
@@ -104,7 +129,7 @@ pub async fn change_ticket_status(
     let conn = db_pool.get().unwrap();
     if loged_user.role_id != 4 {
         let result: Result<Ticket, Error> = diesel::update(tickets.filter(id.eq(ticket_id)))
-        .set(&data.set_changed_by(&loged_user))
+            .set(&data.set_changed_by(&loged_user))
             .get_result(&conn);
         response(result)
     } else {
