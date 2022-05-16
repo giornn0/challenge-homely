@@ -116,6 +116,7 @@ pub struct InsertUser{
   lastname: String,
   email: String,
   password: String,
+  role_id: i32,
 }
 impl InsertUser{
   pub fn from(new_user: &NewUser)-> InsertUser{
@@ -123,7 +124,8 @@ impl InsertUser{
       name: new_user.name.to_owned(),
       lastname: new_user.lastname.to_owned(),
       email: new_user.email.to_owned(),
-      password: new_user.password.to_owned()
+      password: new_user.password.to_owned(),
+      role_id: new_user.role_id
     }
   }
 }
